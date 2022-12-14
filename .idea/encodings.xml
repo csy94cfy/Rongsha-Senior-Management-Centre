@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding">
+    <file url="file://$PROJECT_DIR$/src/com/data/common/SessionUtil.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/com/framework/core/BaseManageController.java" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/src/com/framework/core/SessionUtil.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/com/framework/util/JDBCUtils.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/com/framework/util/ManageConstants.java" charset="UTF-8" />
+  </component>
+</project>

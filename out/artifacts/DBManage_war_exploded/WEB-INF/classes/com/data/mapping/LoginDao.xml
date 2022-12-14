@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.data.dao.ILoginDao" >
+	
+	<!-- 通过用户账号获取用户信息 -->
+	<select id="getUserByUserId" resultType="com.framework.core.SessionManageEntity" parameterType="java.lang.String" >
+		SELECT
+			m.id,
+			m.user_id,
+			m.user_name,
+			m.user_password,
+			m.user_role_id,
+			m.user_login_date
+		FROM
+			m_user m
+		WHERE
+			m.del_flag = 0 
+		AND 
+			m.user_id = #{userId,jdbcType=VARCHAR}
+	</select>
+
+<!-- 通过用户账号和用户角色获取菜单权限 -->
+	<select id="listMenuByUserIdAndUserRoleId" resultType="com.data.entity.MenuEntity" parameterType="java.lang.String" >
+		SELECT menu_id, menu_name, menu_url, menu_level, menu_pid, menu_sort, menu_icon
+		FROM m_menu 
+		WHERE del_flag = '0' 
+		AND
+		menu_id 
+		in (
+			SELECT  menu_id FROM m_menu_power where power_id=#{userRoleId} AND del_flag = '0' 
+		)
+		ORDER BY menu_sort	
+	</select>
+<!--通过账号更新用户的密码  -->
+	<update id="updatePasswordById" parameterType="com.framework.core.SessionManageEntity">
+		UPDATE m_user 
+		SET user_password =#{userPassword,jdbcType=VARCHAR}, 
+			update_by=#{updateBy,jdbcType=VARCHAR},
+			update_date=now() 
+		WHERE del_flag='0' 
+		AND id=#{id,jdbcType=VARCHAR}		 
+	</update>
+</mapper>

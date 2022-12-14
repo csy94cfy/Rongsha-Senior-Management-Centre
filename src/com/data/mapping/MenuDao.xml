@@ -1,0 +1,181 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.data.dao.IMenuDao" >
+	
+	
+	<!-- 用于编辑页面查询 -->
+	<sql id="Base_Column_Edit" >
+		id,
+		menu_id, 
+		menu_name, 
+		menu_server,
+		menu_url, 
+		menu_level,
+		menu_pid, 
+		menu_sort, 
+		menu_icon
+	</sql>
+	
+	<!--通过id查询菜单	-->
+	<select id="getById" resultType="com.data.entity.MenuEntity" parameterType="java.lang.String" >
+		SELECT 
+			id,
+			menu_id, 
+			menu_name, 
+			menu_server,
+			menu_url, 
+			menu_level,
+			menu_pid, 
+			menu_sort, 
+			menu_icon
+		FROM m_menu
+		WHERE id = #{id,jdbcType=VARCHAR}
+		AND del_flag = '0'
+	</select>
+	
+	<!-- 查询菜单条数-->
+	<select id="count" resultType="long" parameterType="com.data.entity.MenuEntity" >
+		SELECT count(*)
+		FROM m_menu
+		WHERE del_flag=0
+		<if test="menuId != null and menuId != ''" >
+			AND menu_id like CONCAT('%',#{menuId,jdbcType=VARCHAR},'%' )
+		</if>
+		<if test="menuName != null and menuName != ''" >
+			AND menu_name like CONCAT('%',#{menuName,jdbcType=VARCHAR},'%' )
+		</if>
+		<if test="menuUrl != null and menuUrl != ''" >
+			AND menu_url like CONCAT('%',#{menuUrl,jdbcType=VARCHAR},'%' )
+		</if>
+		<if test="menuLevel != null and menuLevel != ''	and menuLevel != '000'" >
+			AND menu_level = #{menuLevel,jdbcType=VARCHAR}
+		</if>
+		<if test="menuPid != null and menuPid != '000'" >
+			AND menu_pid = #{menuPid,jdbcType=VARCHAR}
+		</if>
+	</select>
+	
+	<!-- 查询菜单明细-->
+	<select id="list" resultType="com.data.entity.MenuEntity" parameterType="com.data.entity.MenuEntity" >
+		SELECT 
+			id,
+			menu_id, 
+			menu_name, 
+			menu_server, 
+			menu_url,
+			CASE WHEN menu_level = '0' THEN '一级菜单' ELSE '二级菜单' END AS menu_level,
+			menu_pid, 
+			menu_sort, 
+			menu_icon,
+			(SELECT menu_name from m_menu where menu_id = m.menu_pid) AS menuParentName
+		FROM m_menu m
+		WHERE del_flag='0'
+		<if test="menuId != null and menuId != ''" >
+			AND menu_id like CONCAT('%',#{menuId,jdbcType=VARCHAR},'%' )
+		</if>
+		<if test="menuName != null and menuName != ''" >
+			AND menu_name like CONCAT('%',#{menuName,jdbcType=VARCHAR},'%' )
+		</if>
+		<if test="menuUrl != null and menuUrl != ''" >
+			AND menu_url like CONCAT('%',#{menuUrl,jdbcType=VARCHAR},'%' )
+		</if>
+		<if test="menuLevel != null and menuLevel != ''	and menuLevel != '000'" >
+			AND menu_level = #{menuLevel,jdbcType=VARCHAR}
+		</if>
+		<if test="menuPid != null and menuPid != '000'" >
+			AND menu_pid = #{menuPid,jdbcType=VARCHAR}
+		</if>
+		order by menu_id 
+		<if test="rows != -1">
+		limit #{start},#{rows}
+	</if>
+	</select>
+	
+	<!--通过id删除菜单	-->
+	<delete id="deleteById" parameterType="java.lang.String" >
+		UPDATE m_menu
+		SET del_flag = '1',
+			update_by = #{updateBy,jdbcType=VARCHAR},
+			update_date = now()
+		WHERE id = #{id,jdbcType=VARCHAR}
+		AND del_flag = '0'
+	</delete>
+	
+	<!--新增一条菜单信息	-->
+	<insert id="insert" parameterType="com.data.entity.MenuEntity" >
+		INSERT INTO m_menu (
+			id,
+			menu_id, 
+			menu_name, 
+			menu_server,
+			menu_url, 
+			menu_level, 
+			menu_pid, 
+			menu_sort,
+			menu_icon,
+			create_by, 
+			create_date,
+			update_by, 
+			update_date, 
+			del_flag
+		) VALUES (
+			REPLACE(UUID(),'-',''),
+			#{menuId,jdbcType=VARCHAR}, 
+			#{menuName,jdbcType=VARCHAR},
+			#{menuServer,jdbcType=VARCHAR},
+			#{menuUrl,jdbcType=VARCHAR},
+			#{menuLevel,jdbcType=VARCHAR}, 
+			#{menuPid,jdbcType=VARCHAR},
+			#{menuSort,jdbcType=VARCHAR},
+			'fa-users', 
+			#{createBy,jdbcType=VARCHAR}, 
+			now(), 
+			#{updateBy,jdbcType=VARCHAR}, 
+			now(), 
+			'0'
+		)
+	</insert>
+	
+	<!--更新菜单信息	-->
+	<update id="update" parameterType="com.data.entity.MenuEntity" >
+		UPDATE m_menu
+		<set >
+			<if test="menuId != null" >
+				menu_id = #{menuId,jdbcType=VARCHAR},
+			</if>
+			<if test="menuName != null" >
+				menu_name = #{menuName,jdbcType=VARCHAR},
+			</if>
+			<if test="menuServer != null" >
+				menu_server = #{menuServer,jdbcType=VARCHAR},
+			</if>
+			<if test="menuUrl != null" >
+				menu_url = #{menuUrl,jdbcType=VARCHAR},
+			</if>
+			<if test="menuLevel != null" >
+				menu_level = #{menuLevel,jdbcType=VARCHAR},
+			</if>
+			<if test="menuPid != null" >
+				menu_pid = #{menuPid,jdbcType=VARCHAR},
+			</if>
+			<if test="menuSort != null" >
+				menu_sort = #{menuSort,jdbcType=VARCHAR},
+			</if>
+			<if test="updateBy != null" >
+				update_by = #{updateBy,jdbcType=VARCHAR},
+			</if>
+			update_date = now()
+		</set>
+		WHERE del_flag = '0'
+		AND id = #{id,jdbcType=VARCHAR}
+	</update>
+	
+	<!--通过url查询菜单-->
+	<select id="getByUrl" resultType="com.data.entity.MenuEntity" parameterType="java.lang.String" >
+		SELECT 
+		<include refid="Base_Column_Edit" />
+		FROM m_menu
+		WHERE del_flag = '0'
+		AND menu_url = #{menuUrl,jdbcType=VARCHAR}
+	</select>
+</mapper>

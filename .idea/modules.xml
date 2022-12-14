@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/DBManage.iml" filepath="$PROJECT_DIR$/DBManage.iml" />
+      <module fileurl="file://$PROJECT_DIR$/WebContent/WEB-INF/jsp/jsp.iml" filepath="$PROJECT_DIR$/WebContent/WEB-INF/jsp/jsp.iml" />
+      <module fileurl="file://$PROJECT_DIR$/WebContent/WEB-INF/jsp/stumanagement/stumanagement.iml" filepath="$PROJECT_DIR$/WebContent/WEB-INF/jsp/stumanagement/stumanagement.iml" />
+    </modules>
+  </component>
+</project>

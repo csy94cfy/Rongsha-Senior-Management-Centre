@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.data.dao.IUserMoneyDao">
+
+	<!-- 通过条件查询用户信息管理-->
+	<select id="list" parameterType="com.data.entity.UserInfoEntity" resultType="com.data.entity.UserInfoEntity">
+		SELECT
+			u.id,
+			u.real_name,
+			u.user_phone,
+			u.openid
+		FROM u_user_money u
+		WHERE 
+			u.del_flag='0'
+		<if test="realName != null and realName != '' " >
+			AND u.real_name = #{realName,jdbcType=VARCHAR}
+		</if>
+		<if test="userPhone != null and userPhone != '' " >
+			AND u.user_phone = #{userPhone,jdbcType=VARCHAR}
+		</if>
+		<if test="openid != null and openid != '000' " >
+			AND u.openid = #{openid,jdbcType=VARCHAR}
+		</if>
+		<if test="rows != -1">
+			LIMIT #{start} , #{rows}
+		</if>
+	</select>
+	
+	<!-- 通过条件查询用户信息管理数量-->
+	<select id="count" parameterType="com.data.entity.UserInfoEntity" resultType="long">
+		SELECT
+			COUNT(1)	
+		FROM 
+			u_user_money u
+		WHERE 
+			u.del_flag='0'
+		<if test="realName != null and realName != '' " >
+			AND u.real_name = #{realName,jdbcType=VARCHAR}
+		</if>
+		<if test="userPhone != null and userPhone != '' " >
+			AND u.user_phone = #{userPhone,jdbcType=VARCHAR}
+		</if>
+		<if test="openid != null and openid != '000' " >
+			AND u.openid = #{openid,jdbcType=VARCHAR}
+		</if>
+	</select>
+	
+	<!-- 按id查询用户信息管理 -->
+	<select id="getById" resultType="com.data.entity.UserInfoEntity" parameterType="java.lang.String" >
+		SELECT
+			u.id,
+			u.real_name,
+			u.user_phone,
+			u.openid	
+		FROM 
+			u_user_money u		
+		WHERE 
+			u.del_flag='0'
+		AND u.id = #{id,jdbcType=VARCHAR}
+	</select> 
+	
+	<!-- 按Id进行批量逻辑删除-->
+	<delete id="delete">
+		UPDATE u_user_money
+		SET del_flag='1'
+		WHERE del_flag = '0' 
+		AND id IN
+		<foreach item="id" collection="ids" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+	
+	<!-- 新增用户信息管理 -->
+	<insert id="insert" parameterType="com.data.entity.UserInfoEntity" >
+		INSERT INTO u_user_money(
+			id,
+			real_name,
+			user_phone,
+			openid,
+			del_flag
+		)VALUES(
+			#{id,jdbcType=VARCHAR},
+			#{realName,jdbcType=VARCHAR},
+			#{userPhone,jdbcType=VARCHAR},
+			#{openid,jdbcType=VARCHAR},
+			'0'
+		)
+	</insert>
+	
+	<!-- 按Id修改用户信息管理 -->
+	<update id="update" parameterType="com.data.entity.UserInfoEntity" >
+		UPDATE u_user_money
+		<set > 
+			<if test="realName != null" >
+				real_name = #{realName,jdbcType=VARCHAR},
+			</if>
+			<if test="userPhone != null" >
+				user_phone = #{userPhone,jdbcType=VARCHAR},
+			</if>
+			<if test="openid != null and openid != '000'" >
+				openid = #{openid,jdbcType=VARCHAR},
+			</if>
+		</set>
+		WHERE id = #{id,jdbcType=VARCHAR}
+	</update>
+	
+</mapper>

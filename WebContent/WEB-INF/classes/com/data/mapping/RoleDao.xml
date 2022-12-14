@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.data.dao.IRoleDao" >
+	
+	<!-- 通过角色Id删除用户菜单权限 -->
+	<delete id="deleteByRoleId" parameterType="java.lang.String">
+		UPDATE 
+			m_menu_power 
+		SET 
+			del_flag='1',
+			update_by=#{updateBy,jdbcType=VARCHAR},
+			update_date=now() 
+		WHERE 
+			power_id=#{roleId,jdbcType=VARCHAR} 
+		AND del_flag='0'
+	</delete>
+	
+	<!-- 	通过角色Id增加用户菜单权限 -->
+	<insert id="insertByRoleId">
+		INSERT INTO m_menu_power( 
+			id,power_id,menu_id,
+			create_by,create_date,update_by,update_date,del_flag )
+		VALUES
+		<foreach item="menuId" collection="menuIds" separator=",">		 
+			(
+				REPLACE(UUID(),'-',''), #{roleId}, #{menuId},
+				#{createBy,jdbcType=VARCHAR}, now(), #{createBy,jdbcType=VARCHAR}, now(), '0'
+			)
+		</foreach>
+	</insert>
+	
+	<!-- 通过id获取角色 -->
+	<select id="getById" parameterType="java.lang.String" resultType="com.data.entity.RoleEntity">
+		SELECT 
+			id,role_id, role_name, remark
+		FROM m_role
+		WHERE del_flag = '0' 
+		AND id = #{id,jdbcType=VARCHAR}
+	</select>
+	
+	<!-- 通过roleId获取角色 -->
+	<select id="getByRoleId" parameterType="java.lang.String" resultType="com.data.entity.RoleEntity">
+		SELECT 
+			id,role_id, role_name, remark
+		FROM m_role
+		WHERE del_flag = '0' 
+		AND role_id = #{roleId,jdbcType=VARCHAR}
+	</select>
+	
+	<!-- 查询角色统计 -->
+	<select id="count" resultType="long" parameterType="com.data.entity.RoleEntity" >
+		SELECT count(*)
+		FROM m_role
+		<where>
+			<if test="roleId != null and roleId != ''" >
+				AND role_id LIKE CONCAT('%',#{roleId,jdbcType=VARCHAR},'%' )
+			</if>
+			<if test="roleName != null and roleName != ''" >
+				AND role_name LIKE CONCAT('%',#{roleName,jdbcType=VARCHAR},'%' )
+			</if>
+			<if test="remark != null and remark != ''" >
+				AND remark = #{remark,jdbcType=VARCHAR}
+			</if>
+		AND del_flag = '0'
+	</where>
+	</select>	
+	
+	<!-- 查询所有角色 -->
+	<select id="list" resultType="com.data.entity.RoleEntity" parameterType="com.data.entity.RoleEntity" >
+		SELECT 
+			(select count(*) from m_user m  where mr.role_id= m.user_role_id and m.del_flag='0') AS userNumber,
+			mr.id,
+			mr.role_id,
+			mr.role_name,
+			mr.remark,
+			mu.user_id as update_by, 
+			DATE_FORMAT(mr.update_date,'%Y-%m-%d %H:%i:%S') AS update_date
+		FROM m_role mr
+		LEFT JOIN m_user mu ON mr.update_by = mu.user_id and mu.del_flag='0'
+		<where>
+			<if test="roleId != null and roleId != ''" >
+				AND mr.role_id like CONCAT('%',#{roleId,jdbcType=VARCHAR},'%' )
+			</if>
+			<if test="roleName != null and roleName != ''" >
+				AND mr.role_name like CONCAT('%',#{roleName,jdbcType=VARCHAR},'%' )
+			</if>
+			<if test="remark != null and remark != ''" >
+				AND mr.remark = #{remark,jdbcType=VARCHAR}
+			</if>
+			<!-- 只显示未删除的角色 -->
+			AND mr.del_flag = '0'
+		</where>
+		order by role_id
+		limit #{start},#{rows}
+	</select>
+	
+	<!--新增一条角色信息	-->
+	<insert id="insert" parameterType="com.data.entity.RoleEntity" >
+		INSERT INTO m_role (
+			id,role_id, role_name, remark, 
+			create_by, create_date, update_by,update_date, del_flag
+		) VALUES (
+			REPLACE(UUID(),'-',''), #{roleId,jdbcType=VARCHAR}, #{roleName,jdbcType=VARCHAR}, 
+			#{remark,jdbcType=VARCHAR}, #{createBy,jdbcType=VARCHAR}, now(), #{updateBy,jdbcType=VARCHAR}, now(),'0'
+		)
+	</insert>
+	
+	<!--更新一条用户信息	-->
+	<update id="update" parameterType="com.data.entity.RoleEntity" >
+		UPDATE m_role
+		SET role_id = #{roleId,jdbcType=VARCHAR},
+			role_name = #{roleName,jdbcType=VARCHAR},
+			remark = #{remark,jdbcType=VARCHAR},
+			update_by = #{updateBy,jdbcType=VARCHAR},
+			update_date = now()
+		WHERE id = #{id,jdbcType=VARCHAR}
+		AND del_flag='0'
+	</update>
+	
+	<!--// TODO 批量删除操作 用作参考-->
+	<!--批量删除角色 -->
+	<delete id="deleteByIds">
+		UPDATE m_role 
+		SET del_flag='1',
+			update_date=now(),
+			update_by=#{updateBy} 
+		WHERE id IN
+		<foreach item="id" collection="ids" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+		AND del_flag='0'
+	</delete>
+	
+	<!--取得当前角色下用户数量	-->
+	<select id="check" resultType="long" parameterType="com.data.entity.RoleEntity" >
+		SELECT
+			COUNT(*)
+		FROM
+			m_user
+		where 
+			user_role_id = #{roleId}
+		AND 
+			del_flag='0'
+	</select>	
+	
+	
+	<!--查询显示权限菜单树	-->
+	<select id="listMenuPowerByRoleId" parameterType="java.lang.String" resultType="com.data.entity.TreeNode">
+			<!--菜单权限查询-->
+			SELECT 
+				mm.menu_id AS id,
+				mm.menu_pid AS p_id,
+				mm.menu_name AS name,
+				IF(mm.menu_level = 1,'false','true') as 'open',
+				mm.menu_level as 'level',
+				IF(ISNULL(mmp.menu_id),'false' ,'true') AS checked,
+				mm.menu_sort 
+			FROM m_menu mm
+			LEFT JOIN m_menu_power mmp ON mm.menu_id = mmp.menu_id AND mmp.power_id=#{roleId} AND mmp.del_flag='0'
+			WHERE mm.del_flag = '0'
+		ORDER BY menu_sort
+	</select>
+</mapper>

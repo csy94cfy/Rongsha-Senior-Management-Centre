@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.data.dao.IMenuPowerDao" >
+	<delete id="deleteByRoleId" parameterType="java.lang.String">
+		UPDATE 
+			m_menu_power 
+		SET 
+			del_flag='1',
+			update_by=#{updateBy,jdbcType=VARCHAR},
+			update_date=now() 
+		WHERE 
+			power_id=#{roleId,jdbcType=VARCHAR} 
+		AND del_flag='0'
+	</delete>
+	
+	<insert id="insertByRoleId">
+		INSERT INTO m_menu_power( 
+			id,power_id,menu_id,
+			create_by,create_date,update_by,update_date,del_flag )
+		VALUES
+		<foreach item="menuId" collection="menuIds" separator=",">		 
+			(
+				REPLACE(UUID(),'-',''), #{roleId}, #{menuId},
+				#{createBy,jdbcType=VARCHAR}, now(), #{createBy,jdbcType=VARCHAR}, now(), '0'
+			)
+		</foreach>
+	</insert>
+	
+</mapper>

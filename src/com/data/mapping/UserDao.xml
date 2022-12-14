@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.data.dao.IUserDao" >
+
+	<!--通过主键删除用户-->
+	<delete id="deleteById" parameterType="java.lang.String" >
+		UPDATE m_user 
+		SET del_flag='1',
+			update_by=#{updateBy,jdbcType=VARCHAR},
+			update_date=now() 
+		WHERE id=#{id,jdbcType=VARCHAR} 
+		AND del_flag='0'
+	</delete>
+	
+	<!-- 查询用户明细-->
+	<select id="list" resultType="com.data.entity.UserEntity" parameterType="com.data.entity.UserEntity" >
+		SELECT
+			mu.id,
+			mu.user_id,
+			mu.user_name,
+			mu.user_password,
+			mr.role_name AS userRoleId ,
+			mu.remark,
+			mu1.user_name as update_by,
+			DATE_FORMAT(mu.update_date,'%Y-%m-%d %H:%i:%S') AS update_date
+		FROM
+			m_user mu
+		LEFT JOIN m_role mr ON mu.user_role_id = mr.role_id and mr.del_flag = '0'
+		LEFT JOIN m_user mu1 ON mu.update_by = mu1.user_id and mu1.del_flag ='0'
+		WHERE mu.del_flag = '0'
+		<if test="userId != null and userId != ''" >
+			AND mu.user_id like CONCAT('%',#{userId,jdbcType=VARCHAR},'%' )
+		</if>
+		<if test="userName != null and userName != ''" >
+			AND mu.user_name like CONCAT('%',#{userName,jdbcType=VARCHAR},'%' )
+		</if>
+		<if test="userRoleId != null and userRoleId != '000'" >
+			AND mu.user_role_id = #{userRoleId,jdbcType=VARCHAR}
+		</if>
+		<if test="sort != null and sort != ''" >
+			order by ${sort} ${order} 
+		</if>
+		order by update_date desc
+		limit #{start},#{rows} 
+	</select>
+	
+	<!--按条件统计查询-->
+	<select id="count" resultType="long" parameterType="com.data.entity.UserEntity" >
+		SELECT count(*)
+		FROM m_user mu
+		WHERE mu.del_flag = '0'
+		<if test="userId != null and userId != ''" >
+			AND mu.user_id like CONCAT('%',#{userId,jdbcType=VARCHAR},'%' )
+		</if>
+		<if test="userName != null and userName != ''" >
+			AND mu.user_name like CONCAT('%',#{userName,jdbcType=VARCHAR},'%' )
+		</if>
+		<if test="userRoleId != null and userRoleId != '000'" >
+			AND mu.user_role_id = #{userRoleId,jdbcType=VARCHAR}
+		</if>
+		<if test="sort != null and sort != ''" >
+			order by #{sort} #{order} 
+		</if>
+	</select>
+	
+	<!--通过user_id获取用户信息-->
+	<select id ="getById" parameterType="string" resultType="com.data.entity.UserEntity">
+		SELECT
+			mu.id,
+			mu.user_id,
+			mu.user_name,
+			mu.user_password,
+			mu.user_role_id,
+			mr.role_name,
+			mu.remark	
+		FROM m_user mu
+		LEFT JOIN m_role mr ON mu.user_role_id = mr.role_id and mr.del_flag='0'	
+		WHERE mu.del_flag = '0'
+		AND mu.id = #{id,jdbcType=VARCHAR}
+	</select>
+	
+	<!--查询账号是否存在-->
+	<select id="checkByUserId" resultType="int" parameterType="com.data.entity.UserEntity">
+		SELECT count(*)
+		FROM m_user mu
+		WHERE mu.del_flag = '0' 
+		AND mu.user_id =#{userId,jdbcType=VARCHAR}
+	</select>
+	
+	<!--新增用户-->
+	<insert id ="insert" parameterType="com.data.entity.UserEntity">
+		INSERT INTO m_user (
+			id,
+			user_id,
+			user_name,
+			user_password,
+			user_role_id,
+			remark,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			del_flag
+		)VALUES(
+			REPLACE(UUID(),'-',''),
+			#{userId,jdbcType=VARCHAR},
+			#{userName,jdbcType=VARCHAR},
+			#{userPassword,jdbcType=VARCHAR},
+			#{userRoleId,jdbcType=VARCHAR},
+			#{remark,jdbcType=VARCHAR},
+			#{createBy,jdbcType=VARCHAR},
+			now(),
+			#{updateBy,jdbcType=VARCHAR}, 
+			now(), 
+			'0'
+		)
+	
+	</insert>
+
+	<!--更新用户-->
+	<update id="update" parameterType="com.data.entity.UserEntity">
+		UPDATE m_user 
+		<set> 
+			<if test="userId != null and userId != ''" >
+				 user_id = #{userId,jdbcType=VARCHAR},
+			</if>
+			<if test="userPassword != null and userPassword != ''" >
+				 user_password = #{userPassword,jdbcType=VARCHAR},
+			</if>
+			<if test="userName != null and userName != ''" >
+				user_name = #{userName,jdbcType=VARCHAR},
+			</if>
+			<if test="userRoleId != null and userRoleId != ''" >
+				user_role_id = #{userRoleId,jdbcType=VARCHAR},
+			</if>
+			<if test="remark != null and remark != ''" >
+				remark = #{remark,jdbcType=VARCHAR},
+			</if> 
+			update_by = #{updateBy,jdbcType=VARCHAR},
+			update_date = now()
+		</set>
+		WHERE id=#{id,jdbcType=VARCHAR}
+		AND del_flag='0'
+	</update>
+</mapper>
